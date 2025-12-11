@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>Isola 70 - Controle de Convidados</title>
+    <meta name="description" content="Sistema de controle de convidados e gestão de festa. Dashboard com estatísticas, lista de convidados, hospedagens e muito mais." />
+    <meta name="author" content="Lovable" />
+    <meta name="theme-color" content="#c98a1d" />
+
+    <meta property="og:title" content="Isola 70 - Controle de Convidados" />
+    <meta property="og:description" content="Sistema de controle de convidados e gestão de festa" />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:site" content="@Lovable" />
+    <meta name="twitter:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
+    <script>
+      (function () {
+        var p = window.location.pathname || "";
+        var base = "/festafacil/";
+        if (p === "/") {
+          try { window.location.replace(base); } catch { window.location.href = base; }
+          return;
+        }
+        if (p === "/festafacil") {
+          try { window.location.replace(base); } catch { window.location.href = base; }
+          return;
+        }
+      })();
+    </script>
+  </head>
+
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
