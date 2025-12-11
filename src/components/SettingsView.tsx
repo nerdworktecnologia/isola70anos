@@ -1,4 +1,4 @@
-import { PartyPopper, Info, Download, Upload, Settings, Trash2, Image as ImageIcon, Pencil, MapPin, CalendarDays } from "lucide-react";
+import { PartyPopper, Info, Download, Upload, Settings, Trash2, Image as ImageIcon, MapPin, CalendarDays } from "lucide-react";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
@@ -63,11 +63,7 @@ export function SettingsView({ guests, onImport, eventTitle, onTitleChange, even
       return "Sexta e Sábado";
     }
   });
-  const [editOpen, setEditOpen] = useState(false);
-  const [tempTitle, setTempTitle] = useState<string>(eventTitle);
-  const [tempSubtitle, setTempSubtitle] = useState<string>(subtitle);
-  const [tempLocation, setTempLocation] = useState<string>(locationText);
-  const [tempDate, setTempDate] = useState<string>(dateText);
+  
   const CURRENT_VERSION = "1";
   const compactBtn = "w-full whitespace-normal break-words text-center justify-center gap-2";
   const readEvent = () => {
@@ -157,32 +153,9 @@ export function SettingsView({ guests, onImport, eventTitle, onTitleChange, even
     })();
   }, []);
 
-  useEffect(() => {
-    if (editOpen) {
-      setTempTitle(eventTitle);
-      setTempSubtitle(subtitle);
-      setTempLocation(locationText);
-      setTempDate(dateText);
-    }
-  }, [editOpen, eventTitle, subtitle, locationText, dateText]);
+  
 
-  const saveTexts = () => {
-    const t = tempTitle.trim();
-    const s = tempSubtitle.trim();
-    const l = tempLocation.trim();
-    const d = tempDate.trim();
-    if (t !== eventTitle) onTitleChange(t);
-    writeEvent({ subtitle: s, location: l, date: d });
-    setSubtitle(s);
-    setLocationText(l);
-    setDateText(d);
-    try { window.dispatchEvent(new CustomEvent("isola:event-update")); } catch { /* noop */ }
-    (async () => {
-      try { await setStore("event.meta", { title: t, subtitle: s, location: l, date: d, image: eventImage || "" }); } catch { /* noop */ }
-    })();
-    setEditOpen(false);
-    toast({ title: "Textos atualizados" });
-  };
+  
 
   const formatTS = (ts?: number | null) => (ts ? new Date(ts).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" }) : "");
 
@@ -1116,9 +1089,7 @@ export function SettingsView({ guests, onImport, eventTitle, onTitleChange, even
                   </AlertDialog>
                 </DropdownMenuContent>
               </DropdownMenu>
-              <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground" aria-label="Editar textos" onClick={() => setEditOpen(true)}>
-                <Pencil className="h-4 w-4" />
-              </Button>
+              
             </div>
             {subtitle ? (
               <p className="text-sm text-muted-foreground">{subtitle}</p>
@@ -1322,24 +1293,7 @@ export function SettingsView({ guests, onImport, eventTitle, onTitleChange, even
         
       </div>
 
-      <Dialog open={editOpen} onOpenChange={setEditOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Editar textos do evento</DialogTitle>
-            <DialogDescription>Atualize título, descrição, local e data</DialogDescription>
-          </DialogHeader>
-          <div className="space-y-3">
-            <Input placeholder="Título do evento" value={tempTitle} onChange={(e) => setTempTitle(e.target.value)} />
-            <Input placeholder="Descrição do evento" value={tempSubtitle} onChange={(e) => setTempSubtitle(e.target.value)} />
-            <Input placeholder="Local" value={tempLocation} onChange={(e) => setTempLocation(e.target.value)} />
-            <Input placeholder="Data" value={tempDate} onChange={(e) => setTempDate(e.target.value)} />
-            <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setEditOpen(false)}>Cancelar</Button>
-              <Button onClick={saveTexts}>Salvar</Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
+      
 
       <div className="bg-muted/50 rounded-xl p-4 flex gap-3">
         <Info className="h-5 w-5 text-muted-foreground flex-shrink-0 mt-0.5" />
