@@ -43,20 +43,6 @@ export function SettingsView({ guests, onImport, eventTitle, onTitleChange, even
       return "";
     }
   });
-  const [supabaseUrl, setSupabaseUrl] = useState<string>(() => {
-    try {
-      return localStorage.getItem("supabase.url") || "";
-    } catch {
-      return "";
-    }
-  });
-  const [supabaseKey, setSupabaseKey] = useState<string>(() => {
-    try {
-      return localStorage.getItem("supabase.key") || "";
-    } catch {
-      return "";
-    }
-  });
   const [locationText, setLocationText] = useState<string>(() => {
     try {
       const raw = localStorage.getItem("isola.event");
@@ -200,41 +186,6 @@ export function SettingsView({ guests, onImport, eventTitle, onTitleChange, even
 
   const formatTS = (ts?: number | null) => (ts ? new Date(ts).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" }) : "");
 
-  const saveSupabaseConfig = () => {
-    try {
-      const u = supabaseUrl.trim();
-      const k = supabaseKey.trim();
-      localStorage.setItem("supabase.url", u);
-      localStorage.setItem("supabase.key", k);
-      toast({ title: "Supabase configurado", description: "Recarregue a página para aplicar" });
-    } catch {
-      toast({ title: "Falha ao salvar Supabase", variant: "destructive" });
-    }
-  };
-
-  const testSupabase = async () => {
-    try {
-      const u = supabaseUrl.trim();
-      const k = supabaseKey.trim();
-      if (!u || !k) {
-        toast({ title: "Configure o Supabase", description: "Preencha URL e Key", variant: "destructive" });
-        return;
-      }
-      const ok = await setStore("healthcheck", { ok: true, ts: Date.now() });
-      if (!ok) {
-        toast({ title: "Falha ao escrever", description: "Verifique políticas RLS", variant: "destructive" });
-        return;
-      }
-      const res = await getStore<Record<string, unknown>>("healthcheck");
-      if (res && typeof res === "object") {
-        toast({ title: "Conexão OK", description: "Leitura/escrita funcionando" });
-      } else {
-        toast({ title: "Leitura vazia", description: "Cheque a tabela store" });
-      }
-    } catch {
-      toast({ title: "Erro ao testar Supabase", variant: "destructive" });
-    }
-  };
 
   const exportXLSX = async () => {
     const ExcelJS = (await import("exceljs")).default;
@@ -1265,16 +1216,6 @@ export function SettingsView({ guests, onImport, eventTitle, onTitleChange, even
           ) : null}
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
-          <Input className="bg-muted/60" placeholder="Supabase URL" value={supabaseUrl} onChange={(e) => setSupabaseUrl(e.target.value)} />
-          <Input className="bg-muted/60" placeholder="Supabase Key" value={supabaseKey} onChange={(e) => setSupabaseKey(e.target.value)} />
-          <Button variant="outline" className={compactBtn} onClick={saveSupabaseConfig}>
-            <span className="text-xs sm:text-sm">Salvar Supabase</span>
-          </Button>
-          <Button variant="outline" className={compactBtn} onClick={testSupabase}>
-            <span className="text-xs sm:text-sm">Testar Supabase</span>
-          </Button>
-        </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <AlertDialog>

@@ -5,7 +5,7 @@ import { createClient } from "@supabase/supabase-js";
 
 const app = express();
 app.use(express.json());
-const ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN || "https://carolbrandbpro.github.io";
+const ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN || "https://nerdworktecnologia.github.io";
 const DEV_ORIGINS = ["http://localhost:8080", "http://127.0.0.1:8080", "http://localhost:8081"];
 const origins = [ALLOWED_ORIGIN, ...DEV_ORIGINS].filter(Boolean);
 app.use(cors({ origin: origins }));
@@ -55,6 +55,13 @@ app.get("/api/arrivals", async (_req, res) => {
       for (const row of r.rows) out[row.id] = !!row.arrived;
       return res.json(out);
     }
+    if (supa) {
+      const { data, error } = await supa.from("arrivals").select("id, arrived");
+      if (error) throw error;
+      const out = {};
+      for (const row of data || []) out[row.id] = !!row.arrived;
+      return res.json(out);
+    }
     const out = {};
     for (const [id, arrived] of memory.entries()) out[id] = !!arrived;
     return res.json(out);
@@ -76,6 +83,11 @@ app.put("/api/guests/:id/arrived", async (req, res) => {
       );
       return res.json({ ok: true });
     }
+    if (supa) {
+      const { error } = await supa.from("arrivals").upsert({ id, arrived }, { onConflict: "id" });
+      if (error) throw error;
+      return res.json({ ok: true });
+    }
     memory.set(id, arrived);
     return res.json({ ok: true });
   } catch (e) {
@@ -91,6 +103,12 @@ app.get("/api/store/:key", async (req, res) => {
       const r = await pool.query("SELECT value FROM store WHERE key = $1", [key]);
       if (r.rows.length === 0) return res.status(404).json({ error: "not_found" });
       return res.json(r.rows[0].value);
+    }
+    if (supa) {
+      const { data, error } = await supa.from("store").select("value").eq("key", key).limit(1).maybeSingle();
+      if (error) throw error;
+      if (!data) return res.status(404).json({ error: "not_found" });
+      return res.json(data.value);
     }
     if (!memoryStore.has(key)) return res.status(404).json({ error: "not_found" });
     return res.json(memoryStore.get(key));
@@ -109,6 +127,11 @@ app.put("/api/store/:key", async (req, res) => {
         "INSERT INTO store (key, value) VALUES ($1, $2) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value",
         [key, value]
       );
+      return res.json({ ok: true });
+    }
+    if (supa) {
+      const { error } = await supa.from("store").upsert({ key, value }, { onConflict: "key" });
+      if (error) throw error;
       return res.json({ ok: true });
     }
     memoryStore.set(key, value);
