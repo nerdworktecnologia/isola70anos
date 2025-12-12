@@ -15,7 +15,7 @@ export function EventHeader({
   location = "Villa Bom Jardim, Ilha de Paraty",
   date = "Sexta e Sábado",
 }: EventHeaderProps) {
-  const imgSrc = image || "/mm-cerimonial.png";
+  const imgSrc = image || "./mm-cerimonial.svg";
   return (
     <div className="mb-6 bg-card rounded-xl border border-border p-4 sm:p-6">
       <div className="flex items-center gap-4">
