@@ -13,8 +13,8 @@
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
     "preview": "vite preview",
-    "deploy": "vite build && git add -A && git commit -m \"deploy: build\" || echo nochanges && git subtree split --prefix dist -b gh-pages && git push origin gh-pages --force && git branch -D gh-pages",
-    "deploy:docs": "vite build && node scripts/deploy-docs.mjs && git add docs && git commit -m \"deploy: docs\" || echo nochanges && git push origin main"
+    "deploy": "vite build && node scripts/postbuild-version.mjs && git add -A && git commit -m \"deploy: build\" || echo nochanges && git subtree split --prefix dist -b gh-pages && git push origin gh-pages --force && git branch -D gh-pages",
+    "deploy:docs": "vite build && node scripts/postbuild-version.mjs && node scripts/deploy-docs.mjs && git add docs && git commit -m \"deploy: docs\" || echo nochanges && git push origin main"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
