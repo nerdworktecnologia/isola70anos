@@ -15,12 +15,23 @@ export function EventHeader({
   location = "Villa Bom Jardim, Ilha de Paraty",
   date = "Sexta e Sábado",
 }: EventHeaderProps) {
+  const imgSrc = image || "/mm-cerimonial.png";
   return (
     <div className="mb-6 bg-card rounded-xl border border-border p-4 sm:p-6">
       <div className="flex items-center gap-4">
         <div className="h-14 w-14 sm:h-16 sm:w-16 rounded-2xl overflow-hidden border">
-          {image ? (
-            <img src={image} alt={title} className="h-full w-full object-cover" />
+          {imgSrc ? (
+            <img
+              src={imgSrc}
+              alt={title}
+              className="h-full w-full object-cover"
+              onError={(e) => {
+                try {
+                  const cur = e.currentTarget.getAttribute("src") || "";
+                  if (cur !== "/placeholder.svg") e.currentTarget.setAttribute("src", "/placeholder.svg");
+                } catch { /* noop */ }
+              }}
+            />
           ) : (
             <div className="h-full w-full bg-gradient-to-br from-primary to-accent opacity-80" />
           )}

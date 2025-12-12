@@ -1,4 +1,4 @@
-import { PartyPopper, Info, Download, Upload, Settings, Trash2, Image as ImageIcon, MapPin, CalendarDays } from "lucide-react";
+import { PartyPopper, Info, Download, Upload, Settings, MapPin, CalendarDays } from "lucide-react";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
@@ -23,7 +23,6 @@ interface SettingsViewProps {
 
 export function SettingsView({ guests, onImport, eventTitle, onTitleChange, eventImage, onImageChange }: SettingsViewProps & { eventImage?: string; onImageChange?: (img: string) => void }) {
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const imageInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const [reportOpen, setReportOpen] = useState(false);
   const [report, setReport] = useState<{ added: Guest[]; ignored: Guest[] } | null>(null);
@@ -332,6 +331,30 @@ export function SettingsView({ guests, onImport, eventTitle, onTitleChange, even
     a.click();
     URL.revokeObjectURL(url);
     toast({ title: "Exportação concluída", description: `Arquivo ${eventTitle}.xlsx baixado` });
+  };
+
+  const exportArrivalsXLSX = async () => {
+    const ExcelJS = (await import("exceljs")).default;
+    const wb = new ExcelJS.Workbook();
+    const ws = wb.addWorksheet("Chegadas");
+    ws.columns = [
+      { header: "ID", key: "id", width: 16 },
+      { header: "Nome", key: "name", width: 24 },
+      { header: "Grupo", key: "group", width: 12 },
+      { header: "Hospedagem", key: "accommodation", width: 18 },
+    ];
+    guests.forEach((g) => {
+      ws.addRow({ id: g.id, name: g.name, group: g.group, accommodation: g.accommodation || "" });
+    });
+    const buf = await wb.xlsx.writeBuffer();
+    const blob = new Blob([buf], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${eventTitle || "chegadas"}.chegadas.xlsx`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast({ title: "Chegadas exportadas", description: `Arquivo ${eventTitle || "chegadas"}.chegadas.xlsx baixado` });
   };
 
   const exportJSON = async () => {
@@ -1060,35 +1083,7 @@ export function SettingsView({ guests, onImport, eventTitle, onTitleChange, even
                   </Tooltip>
                 </TooltipProvider>
               ) : null}
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground" aria-label="Opções de imagem">
-                    <ImageIcon className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="start">
-                  <DropdownMenuItem onClick={() => imageInputRef.current?.click()}>Trocar imagem</DropdownMenuItem>
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <DropdownMenuItem>
-                        <Trash2 className="h-4 w-4 mr-2" /> Remover imagem
-                      </DropdownMenuItem>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Remover imagem do evento?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          Isso vai limpar a imagem atual do cabeçalho. Você pode trocar novamente depois.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                        <AlertDialogAction onClick={clearEventImage}>Remover</AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              
               
             </div>
             {subtitle ? (
@@ -1154,6 +1149,10 @@ export function SettingsView({ guests, onImport, eventTitle, onTitleChange, even
             <Download className="h-4 w-4" />
             <span className="text-xs sm:text-sm">Chegadas (JSON)</span>
           </Button>
+          <Button variant="outline" className={compactBtn} onClick={exportArrivalsXLSX}>
+            <Download className="h-4 w-4" />
+            <span className="text-xs sm:text-sm">Chegadas (Excel)</span>
+          </Button>
           <Button variant="outline" className={compactBtn} onClick={exportStockJSON}>
             <Download className="h-4 w-4" />
             <span className="text-xs sm:text-sm">Estoque (JSON)</span>
@@ -1167,9 +1166,6 @@ export function SettingsView({ guests, onImport, eventTitle, onTitleChange, even
           }}>
             <span className="text-xs sm:text-sm">Copiar URL</span>
           </Button>
-          <Button variant="outline" className={compactBtn} disabled={!needsUpgrade} onClick={upgradeEventStructure}>
-            <span className="text-xs sm:text-sm">Atualizar</span>
-          </Button>
           {importOk ? (
             <TooltipProvider>
               <Tooltip>
@@ -1180,7 +1176,7 @@ export function SettingsView({ guests, onImport, eventTitle, onTitleChange, even
                   />
                 </TooltipTrigger>
                 <TooltipContent>
-                  {needsUpgrade ? "Versão antiga — atualize" : "OK — dados atualizados"}
+                  {needsUpgrade ? "Versão antiga" : "OK — dados atualizados"}
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
@@ -1258,40 +1254,7 @@ export function SettingsView({ guests, onImport, eventTitle, onTitleChange, even
       </div>
 
 
-      <div className="flex gap-2">
-        <input
-          ref={imageInputRef}
-          type="file"
-          accept="image/*"
-          className="hidden"
-          onChange={async (e) => {
-            const file = e.target.files?.[0];
-            if (!file) return;
-            try {
-              const reader = new FileReader();
-              reader.onload = async () => {
-                const dataUrl = String(reader.result || "");
-                writeEvent({ image: dataUrl });
-                if (onImageChange) onImageChange(dataUrl);
-                try {
-                  const ev = readEvent() || {};
-                  const t = typeof ev.title === "string" ? ev.title : eventTitle;
-                  const s = typeof ev.subtitle === "string" ? ev.subtitle : subtitle;
-                  const l = typeof ev.location === "string" ? ev.location : locationText;
-                  const d = typeof ev.date === "string" ? ev.date : dateText;
-                  await setStore("event.meta", { title: t || "", subtitle: s || "", location: l || "", date: d || "", image: dataUrl });
-                } catch { /* noop */ }
-                toast({ title: "Imagem atualizada" });
-                if (imageInputRef.current) imageInputRef.current.value = "";
-              };
-              reader.readAsDataURL(file);
-            } catch {
-              toast({ title: "Falha ao atualizar imagem", variant: "destructive" });
-            }
-          }}
-        />
-        
-      </div>
+      <div className="flex gap-2" />
 
       
 
@@ -1342,12 +1305,6 @@ export function SettingsView({ guests, onImport, eventTitle, onTitleChange, even
     </div>
   );
 }
-  const clearEventImage = async () => {
-    try { /* noop */ } catch { /* noop */ }
-    writeEvent({ image: "" });
-    if (onImageChange) onImageChange("");
-    toast({ title: "Imagem removida" });
-  };
   const buildEventBase = () => {
     const ev = readEvent() || {};
     return {

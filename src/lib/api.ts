@@ -1,4 +1,22 @@
-const base = import.meta.env.VITE_API_URL || "";
+const runtimeApi = (() => {
+  if (typeof window !== "undefined") {
+    const p = new URLSearchParams(window.location.search);
+    const q = p.get("api");
+    if (q) {
+      try {
+        if (typeof localStorage !== "undefined") localStorage.setItem("isola.api", q);
+      } catch {
+        void 0;
+      }
+    }
+    const w = (globalThis as unknown as { ISOLA_API_URL?: string }).ISOLA_API_URL;
+    const ls = typeof localStorage !== "undefined" ? localStorage.getItem("isola.api") : null;
+    return String(w || ls || "");
+  }
+  return "";
+})();
+
+const base = runtimeApi || import.meta.env.VITE_API_URL || "";
 
 const url = (path: string) => (base ? `${base}${path}` : path);
 

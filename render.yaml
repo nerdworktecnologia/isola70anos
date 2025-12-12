@@ -1,14 +1,24 @@
+previews:
+  generation: automatic
+
 databases:
   - name: festafacil-db
+    plan: free
+    region: ohio
+    previewPlan: free
 
 services:
   - type: web
     name: festafacil-api
     runtime: node
     plan: free
-    region: oregon
-    rootDir: festafacil
+    region: ohio
+    branch: main
+    rootDir: .
     autoDeploy: true
+    previews:
+      generation: automatic
+      plan: free
     buildCommand: npm ci || npm i
     startCommand: node server/index.js
     healthCheckPath: /api/health
