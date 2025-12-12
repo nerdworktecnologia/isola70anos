@@ -12,7 +12,8 @@
     "build": "vite build",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "deploy": "vite build && git subtree split --prefix dist -b gh-pages && git push origin gh-pages --force && git branch -D gh-pages"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
