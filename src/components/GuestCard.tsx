@@ -1,8 +1,7 @@
 import { Guest } from "@/types/guest";
 import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Phone, MapPin, Calendar, User, CheckCircle } from "lucide-react";
+import { Phone, MapPin, Calendar, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface GuestCardProps {
@@ -33,21 +32,11 @@ const waUrl = (raw: string) => {
 };
 
 export function GuestCard({ guest, onArrivedToggle }: GuestCardProps) {
-  const [pulse, setPulse] = useState(false);
-  useEffect(() => {
-    if (guest.arrived && guest.status !== "Não comparecerá") {
-      setPulse(true);
-      const t = setTimeout(() => setPulse(false), 600);
-      return () => clearTimeout(t);
-    }
-    setPulse(false);
-  }, [guest.arrived, guest.status]);
   return (
     <div
       className={cn(
         "bg-card rounded-xl border p-4 transition-all duration-300 hover:shadow-md animate-fade-in",
-        guest.arrived ? "border-success/40 bg-success/5" : "border-border",
-        pulse && "ring-2 ring-success/70 animate-pulse"
+        "border-border"
       )}
     >
       <div className="flex items-start justify-between mb-3">
@@ -58,29 +47,11 @@ export function GuestCard({ guest, onArrivedToggle }: GuestCardProps) {
           <div>
             <div className="flex items-center gap-1">
               <h3 className="font-semibold text-foreground">{guest.name}</h3>
-              {guest.arrived && guest.status !== "Não comparecerá" && (
-                <CheckCircle className="h-3.5 w-3.5 text-success" />
-              )}
             </div>
             <p className="text-xs text-muted-foreground">{guest.inviteName}</p>
           </div>
         </div>
         <div className="flex items-center gap-3">
-          {guest.status !== "Não comparecerá" && (
-            <div className="flex items-center gap-2">
-              <Checkbox
-                checked={!!guest.arrived}
-                onCheckedChange={(v) => onArrivedToggle?.(guest.id, Boolean(v))}
-                aria-label="Chegou"
-              />
-              <span className="text-xs text-muted-foreground">Chegou</span>
-            </div>
-          )}
-          {guest.arrived && guest.status !== "Não comparecerá" && (
-            <Badge variant="outline" className="text-xs bg-success/10 text-success border-success/20">
-              Chegou
-            </Badge>
-          )}
           <Badge
             variant="outline"
             className={cn("text-xs font-medium", statusStyles[guest.status])}

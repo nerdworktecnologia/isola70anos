@@ -68,16 +68,16 @@ const Index = () => {
   const isMobile = useIsMobile();
   const contentRef = useRef<HTMLDivElement>(null);
   const [showTop, setShowTop] = useState(false);
+  const [settingsUnlocked, setSettingsUnlocked] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem("isola.settings.unlocked") === "true";
+    } catch {
+      return false;
+    }
+  });
   const [arrivalsRefreshedAt, setArrivalsRefreshedAt] = useState<number | null>(null);
   const refreshArrivalsNow = async () => {
-    try {
-      const remote = await getArrivals();
-      if (remote && Object.keys(remote).length) {
-        setGuests((prev) => prev.map((g) => ({ ...g, arrived: !!remote[g.id] })));
-        writeEvent({ arrivals: remote });
-        setArrivalsRefreshedAt(Date.now());
-      }
-    } catch { void 0; }
+    return;
   };
   const arrivalsAutoLockRef = useRef<number>(0);
 
@@ -216,48 +216,9 @@ const Index = () => {
     }
   }, [activeTab, isMobile]);
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const remote = await getArrivals();
-        if (remote && Object.keys(remote).length) {
-          setGuests((prev) => prev.map((g) => ({ ...g, arrived: !!remote[g.id] })));
-          writeEvent({ arrivals: remote });
-          setArrivalsRefreshedAt(Date.now());
-        } else {
-          const ev = readEvent();
-          const map = (ev && typeof ev.arrivals === "object" ? (ev.arrivals as Record<string, boolean>) : null) || (() => {
-            const raw = localStorage.getItem("isola.arrivals");
-            return raw ? (JSON.parse(raw) as Record<string, boolean>) : null;
-          })();
-          if (map && Object.keys(map).length) {
-            setGuests((prev) => prev.map((g) => ({ ...g, arrived: !!map[g.id] })));
-          }
-        }
-      } catch { void 0; }
-    })();
-  }, []);
+  useEffect(() => { }, []);
 
-  useEffect(() => {
-    const refresh = async () => {
-      try {
-        const remote = await getArrivals();
-        if (remote && Object.keys(remote).length) {
-          setGuests((prev) => prev.map((g) => ({ ...g, arrived: !!remote[g.id] })));
-          writeEvent({ arrivals: remote });
-          setArrivalsRefreshedAt(Date.now());
-        }
-      } catch { void 0; }
-    };
-    const onFocus = () => { refresh(); };
-    const onVisibility = () => { if (document.visibilityState === "visible") refresh(); };
-    window.addEventListener("focus", onFocus);
-    document.addEventListener("visibilitychange", onVisibility);
-    return () => {
-      window.removeEventListener("focus", onFocus);
-      document.removeEventListener("visibilitychange", onVisibility);
-    };
-  }, []);
+  useEffect(() => { }, []);
 
   const scrollToTop = () => {
     if (isMobile) {
@@ -265,6 +226,24 @@ const Index = () => {
     } else {
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
+  };
+
+  const handleTabChange = (tab: TabType) => {
+    if (tab === "settings" && !settingsUnlocked) {
+      try {
+        const input = window.prompt("Digite a senha para acessar Configurações");
+        if (input === "1931") {
+          setSettingsUnlocked(true);
+          try { localStorage.setItem("isola.settings.unlocked", "true"); } catch { /* noop */ }
+          setActiveTab("settings");
+          return;
+        }
+        return;
+      } catch {
+        return;
+      }
+    }
+    setActiveTab(tab);
   };
 
   return (
@@ -325,7 +304,7 @@ const Index = () => {
           <ArrowUp className="h-5 w-5" />
         </button>
       )}
-      <BottomNav activeTab={activeTab} onTabChange={setActiveTab} />
+      <BottomNav activeTab={activeTab} onTabChange={handleTabChange} />
     </div>
   );
 };

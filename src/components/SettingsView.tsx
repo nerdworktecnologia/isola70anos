@@ -1145,14 +1145,7 @@ export function SettingsView({ guests, onImport, eventTitle, onTitleChange, even
             <Download className="h-4 w-4" />
             <span className="text-xs sm:text-sm">Evento (checksum)</span>
           </Button>
-          <Button variant="outline" className={compactBtn} onClick={exportArrivalsJSON}>
-            <Download className="h-4 w-4" />
-            <span className="text-xs sm:text-sm">Chegadas (JSON)</span>
-          </Button>
-          <Button variant="outline" className={compactBtn} onClick={exportArrivalsXLSX}>
-            <Download className="h-4 w-4" />
-            <span className="text-xs sm:text-sm">Chegadas (Excel)</span>
-          </Button>
+          
           <Button variant="outline" className={compactBtn} onClick={exportStockJSON}>
             <Download className="h-4 w-4" />
             <span className="text-xs sm:text-sm">Estoque (JSON)</span>

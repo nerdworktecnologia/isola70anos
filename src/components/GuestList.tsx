@@ -54,15 +54,14 @@ export function GuestList({ guests, onToggleArrived, eventTitle, lastRefreshTs, 
       const matchesAccommodation =
         accommodationFilter === "all" || guest.accommodation === accommodationFilter;
       const matchesGroup = groupFilter === "all" || guest.group === groupFilter;
-      const matchesArrived =
-        arrivedFilter === "all" || (arrivedFilter === "yes" ? !!guest.arrived : !guest.arrived);
+      const matchesArrived = true;
       const matchesFriday =
         fridayFilter === "all" || (guest.friday || "") === (fridayFilter === "aye" ? "Aye" : fridayFilter);
       return matchesSearch && matchesStatus && matchesAccommodation && matchesGroup && matchesArrived && matchesFriday;
     });
-  }, [guests, search, statusFilter, accommodationFilter, groupFilter, arrivedFilter, fridayFilter]);
+  }, [guests, search, statusFilter, accommodationFilter, groupFilter, fridayFilter]);
 
-  const activeFilters = [statusFilter, accommodationFilter, groupFilter, arrivedFilter, fridayFilter].filter(
+  const activeFilters = [statusFilter, accommodationFilter, groupFilter, fridayFilter].filter(
     (f) => f !== "all"
   ).length;
 
@@ -75,8 +74,7 @@ export function GuestList({ guests, onToggleArrived, eventTitle, lastRefreshTs, 
   };
 
   
-
-  const handleExportPDF = async () => {
+  const handleExportPDF = async (copies = 1) => {
     const doc = await PDFDocument.create();
     const font = await doc.embedFont(StandardFonts.Helvetica);
     const margin = 36; // 0.5in
@@ -105,7 +103,7 @@ export function GuestList({ guests, onToggleArrived, eventTitle, lastRefreshTs, 
       if (statusFilter !== "all") filters.push(`Status: ${statusFilter}`);
       if (accommodationFilter !== "all") filters.push(`Hospedagem: ${accommodationFilter}`);
       if (groupFilter !== "all") filters.push(`Grupo: ${groupFilter}`);
-      if (arrivedFilter !== "all") filters.push(`Chegada: ${arrivedFilter === "yes" ? "Chegou" : "Não chegou"}`);
+      
       if (fridayFilter !== "all") filters.push(`Sexta: ${fridayFilter === "sim" ? "Sim" : fridayFilter === "aye" ? "Aye" : "Não"}`);
       drawText(filters.length ? `Filtros: ${filters.join("; ")}` : "Sem filtros", margin);
       y -= lineHeight;
@@ -117,7 +115,7 @@ export function GuestList({ guests, onToggleArrived, eventTitle, lastRefreshTs, 
       drawText("Grupo", margin + 280);
       drawText("Hospedagem", margin + 340);
       drawText("Status", margin + 440);
-      drawText("Chegada", margin + 510);
+      
       y -= lineHeight;
       page.drawLine({ start: { x: margin, y }, end: { x: pageWidth - margin, y }, thickness: 0.5, color: rgb(0.7, 0.7, 0.7) });
       y -= 6;
@@ -131,16 +129,25 @@ export function GuestList({ guests, onToggleArrived, eventTitle, lastRefreshTs, 
       }
     };
 
-    drawHeader();
-    for (const g of filteredGuests) {
-      ensureSpace();
-      drawText(g.name, margin);
-      drawText(g.inviteName, margin + 160);
-      drawText(g.group, margin + 280);
-      drawText(g.accommodation || "", margin + 340);
-      drawText(g.status, margin + 440);
-      drawText(g.arrived ? "Sim" : "Não", margin + 510);
-      y -= lineHeight;
+    const renderList = () => {
+      drawHeader();
+      for (const g of filteredGuests) {
+        ensureSpace();
+        drawText(g.name, margin);
+        drawText(g.inviteName, margin + 160);
+        drawText(g.group, margin + 280);
+        drawText(g.accommodation || "", margin + 340);
+        drawText(g.status, margin + 440);
+        y -= lineHeight;
+      }
+    };
+
+    for (let i = 0; i < Math.max(1, copies); i++) {
+      if (i > 0) {
+        page = addPage();
+        y = pageHeight - margin;
+      }
+      renderList();
     }
 
     const pdfBytes = await doc.save();
@@ -149,7 +156,7 @@ export function GuestList({ guests, onToggleArrived, eventTitle, lastRefreshTs, 
     const a = document.createElement("a");
     const date = new Date().toISOString().slice(0, 10);
     a.href = url;
-    a.download = `convidados-${date}.pdf`;
+    a.download = `convidados-${date}${copies > 1 ? `-x${copies}` : ""}.pdf`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -180,10 +187,7 @@ export function GuestList({ guests, onToggleArrived, eventTitle, lastRefreshTs, 
             className="pl-9"
           />
         </div>
-        <Button onClick={async () => { if (refreshDisabled) return; setRefreshDisabled(true); try { await onRefreshArrivals?.(); } finally { setTimeout(() => setRefreshDisabled(false), 3000); } }} variant="outline" className="justify-center gap-2" disabled={refreshDisabled}>
-          Atualizar agora
-        </Button>
-        <Button onClick={handleExportPDF} variant="outline" className="justify-center gap-2">
+        <Button onClick={() => handleExportPDF(1)} variant="outline" className="justify-center gap-2">
           <Download className="h-4 w-4" />
           Exportar PDF
         </Button>
@@ -256,20 +260,6 @@ export function GuestList({ guests, onToggleArrived, eventTitle, lastRefreshTs, 
               </div>
 
         <div className="space-y-2">
-          <label className="text-sm font-medium">Chegada</label>
-          <Select value={arrivedFilter} onValueChange={setArrivedFilter}>
-            <SelectTrigger>
-              <SelectValue placeholder="Todos" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos</SelectItem>
-              <SelectItem value="yes">Chegou</SelectItem>
-              <SelectItem value="no">Não chegou</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="space-y-2">
           <label className="text-sm font-medium">Sexta</label>
           <Select value={fridayFilter} onValueChange={setFridayFilter}>
             <SelectTrigger>
@@ -313,14 +303,7 @@ export function GuestList({ guests, onToggleArrived, eventTitle, lastRefreshTs, 
             <Button size="sm" variant={fridayFilter === "não" ? "default" : "outline"} onClick={() => setFridayFilter("não")}>Não</Button>
           </div>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="text-sm text-muted-foreground">Chegada:</span>
-          <div className="flex items-center gap-1">
-            <Button size="sm" variant={arrivedFilter === "all" ? "default" : "outline"} onClick={() => setArrivedFilter("all")}>Todos</Button>
-            <Button size="sm" variant={arrivedFilter === "yes" ? "default" : "outline"} onClick={() => setArrivedFilter("yes")}>Chegou</Button>
-            <Button size="sm" variant={arrivedFilter === "no" ? "default" : "outline"} onClick={() => setArrivedFilter("no")}>Falta</Button>
-          </div>
-        </div>
+        
       </div>
 
       <div className="flex items-center gap-3 text-sm text-muted-foreground">

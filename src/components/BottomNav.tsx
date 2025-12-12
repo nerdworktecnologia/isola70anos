@@ -16,7 +16,7 @@ const navItems: { id: TabType; label: string; icon: typeof LayoutDashboard }[] =
   { id: "settings", label: "Config", icon: Settings },
 ];
 
-const disabledTabs: TabType[] = ["stock", "settings"];
+const disabledTabs: TabType[] = [];
 
 export function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
   return (
